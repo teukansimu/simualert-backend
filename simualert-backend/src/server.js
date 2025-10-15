@@ -173,4 +173,13 @@ app.post('/api/runAll', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 8787;
+// Testireitti, joka näyttää selkeän viestin selaimessa
+app.get("/test", (req, res) => {
+  res.send(`
+    <h1>SimuAlert toimii! 🚀</h1>
+    <p>Tämä on Teukan testipalvelin Renderissä.</p>
+    <p>Aika palvelimella: ${new Date().toLocaleString()}</p>
+  `);
+});
+
 app.listen(PORT, () => console.log(`SimuAlert backend listening on :${PORT}`));
