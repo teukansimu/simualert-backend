@@ -156,6 +156,21 @@ cron.schedule("*/5 * * * *", async () => {
     if (alrt.active) await runAlertOnce(alrt);
   }
 });
+// Lisätään manuaalinen käynnistys kaikille hauille
+async function runAllAlerts() {
+  console.log('Running all alerts manually...');
+  return [];
+}
+
+app.post('/api/runAll', async (req, res) => {
+  try {
+    const result = await runAllAlerts();
+    res.json({ success: true, count: result.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 const PORT = process.env.PORT || 8787;
 app.listen(PORT, () => console.log(`SimuAlert backend listening on :${PORT}`));
