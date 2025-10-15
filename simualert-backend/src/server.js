@@ -1,10 +1,14 @@
 import express from "express";
+import cors from "cors";
 import cron from "node-cron";
+
+
 import { fetchFromTori } from "./sources/tori.js";
 import { fetchFromEbay } from "./sources/ebay.js";
 import { notifyIFTTT } from "./notifiers/ifttt.js";
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 // In-memory DB for MVP
