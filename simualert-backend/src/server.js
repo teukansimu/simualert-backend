@@ -10,6 +10,45 @@ import { notifyIFTTT } from "./notifiers/ifttt.js";
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.get("/", (req, res) => {
+  res.type("html").send(`<!doctype html>
+  <meta charset="utf-8"/>
+  <title>SimuAlert (MVP)</title>
+  <style>body{font-family:system-ui,Segoe UI,Arial;margin:2rem;max-width:820px}input,select{padding:.5rem;border:1px solid #ccc;border-radius:8px}label{display:block;margin:.5rem 0 .25rem}button{padding:.6rem 1rem;border-radius:10px;border:0;background:#111;color:#fff}</style>
+  <h1>SimuAlert – luo hälytys (MVP)</h1>
+  <p>Liitä oma IFTTT Maker -URL <b>ilman /json</b>, lisää hakusanat ja luo hälytys.</p>
+  <form id="f">
+    <label>Nimi</label>
+    <input id="name" value="Escort Mk2 test" style="width:100%"/>
+    <label>Hakusanat (pilkuilla)</label>
+    <input id="keywords" value="escort mk2, rs2000" style="width:100%"/>
+    <label>Lähteet</label>
+    <select id="sources" multiple size="3" style="width:100%">
+      <option value="tori" selected>Tori</option>
+      <option value="ebay" selected>eBay</option>
+    </select>
+    <label>IFTTT Maker URL</label>
+    <input id="ifttt" placeholder="https://maker.ifttt.com/trigger/ChatGPT_alert/with/key/ABC..." style="width:100%"/>
+    <div style="margin-top:1rem"><button type="submit">Luo hälytys</button></div>
+  </form>
+  <pre id="out" style="background:#f6f6f7;padding:1rem;border-radius:12px;margin-top:1rem;white-space:pre-wrap"></pre>
+  <script>
+  document.getElementById('f').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const body = {
+      name: document.getElementById('name').value,
+      keywords: document.getElementById('keywords').value.split(',').map(s=>s.trim()).filter(Boolean),
+      sources: Array.from(document.getElementById('sources').selectedOptions).map(o=>o.value),
+      ifttt_url: document.getElementById('ifttt').value,
+      notify: ['email'], active: true, frequency: '5min'
+    };
+    const r = await fetch('/api/alerts', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    const j = await r.json();
+    document.getElementById('out').textContent = JSON.stringify(j,null,2);
+  });
+  </script>`);
+});
+
 
 // In-memory DB for MVP
 const DB = {
