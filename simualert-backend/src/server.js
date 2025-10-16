@@ -166,7 +166,7 @@ async function runAllAlerts() {
   return fresh; // palauttaa kaikki tän ajon uudet löydöt
 }
 
-}
+
 
 app.post('/api/runAll', async (req, res) => {
   try {
