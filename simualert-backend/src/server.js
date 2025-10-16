@@ -181,7 +181,6 @@ app.get("/test", (req, res) => {
     <p>Aika palvelimella: ${new Date().toLocaleString()}</p>
   `);
 });
-import { notifyIFTTT } from "./notifiers/ifttt.js";
 
 // 1) POST: turvallinen tapa — anna ifttt_url bodyssa
 app.post("/api/ifttt-test", async (req, res) => {
