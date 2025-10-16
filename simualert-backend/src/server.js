@@ -180,20 +180,56 @@ app.post('/api/runAll', async (req, res) => {
 
 const PORT = process.env.PORT || 8787;
 // Testireitti, joka näyttää selkeän viestin selaimessa
-app.get("/test", (req, res) => {
-  res.send(`
-    <h1>SimuAlert toimii! 🚀</h1>
-    <p>Tämä on Teukan testipalvelin Renderissä.</p>
-    <p>Aika palvelimella: ${new Date().toLocaleString()}</p>
-  `);
+// --- Testisivu juureen ---
+app.get("/", (req, res) => {
+  res.type("html").send(`<!doctype html>
+  <meta charset="utf-8"/>
+  <title>SimuAlert (MVP)</title>
+  <style>body{font-family:system-ui,Segoe UI,Arial;margin:2rem;max-width:820px}input,select{padding:.5rem;border:1px solid #ccc;border-radius:8px}label{display:block;margin:.5rem 0 .25rem}button{padding:.6rem 1rem;border-radius:10px;border:0;background:#111;color:#fff}</style>
+  <h1>SimuAlert – luo hälytys (MVP)</h1>
+  <p>Liitä oma IFTTT Maker -URL <b>ilman /json</b>, lisää hakusanat ja luo hälytys.</p>
+  <form id="f">
+    <label>Nimi</label>
+    <input id="name" value="Escort Mk2 test" style="width:100%"/>
+    <label>Hakusanat (pilkuilla)</label>
+    <input id="keywords" value="escort mk2, rs2000" style="width:100%"/>
+    <label>Lähteet</label>
+    <select id="sources" multiple size="3" style="width:100%">
+      <option value="tori" selected>Tori</option>
+      <option value="ebay" selected>eBay</option>
+    </select>
+    <label>IFTTT Maker URL</label>
+    <input id="ifttt" placeholder="https://maker.ifttt.com/trigger/ChatGPT_alert/with/key/ABC..." style="width:100%"/>
+    <div style="margin-top:1rem"><button type="submit">Luo hälytys</button></div>
+  </form>
+  <pre id="out" style="background:#f6f6f7;padding:1rem;border-radius:12px;margin-top:1rem;white-space:pre-wrap"></pre>
+  <script>
+  document.getElementById('f').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const body = {
+      name: document.getElementById('name').value,
+      keywords: document.getElementById('keywords').value.split(',').map(s=>s.trim()).filter(Boolean),
+      sources: Array.from(document.getElementById('sources').selectedOptions).map(o=>o.value),
+      ifttt_url: document.getElementById('ifttt').value,
+      notify: ['email'], active: true, frequency: '5min'
+    };
+    const r = await fetch('/api/alerts', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    const j = await r.json();
+    document.getElementById('out').textContent = JSON.stringify(j,null,2);
+  });
+  </script>`);
 });
 
-// 1) POST: turvallinen tapa — anna ifttt_url bodyssa
+// --- Helppo /test -ping ---
+app.get("/test", (req, res) => {
+  res.send(`<h1>SimuAlert toimii! 🚀</h1><p>Tämä on Teukan testipalvelin Renderissä.</p><p>Aika palvelimella: ${new Date().toLocaleString()}</p>`);
+});
+
+// --- IFTTT testit ---
 app.post("/api/ifttt-test", async (req, res) => {
   try {
     const url = req.body?.ifttt_url;
     if (!url) return res.status(400).json({ ok:false, error: "missing ifttt_url" });
-
     const fakeItem = {
       title: "Escort Mk2 – testilöytö",
       price_eur: 123,
@@ -202,7 +238,6 @@ app.post("/api/ifttt-test", async (req, res) => {
       location: "Forssa",
       posted_at: new Date().toISOString(),
     };
-
     await notifyIFTTT(url, fakeItem);
     res.json({ ok: true });
   } catch (e) {
@@ -211,7 +246,6 @@ app.post("/api/ifttt-test", async (req, res) => {
   }
 });
 
-// 2) (Valinnainen) GET: helppo selain-testi ?url=<IFTTT>
 app.get("/api/ifttt-test", async (req, res) => {
   try {
     const url = req.query.url;
@@ -229,6 +263,37 @@ app.get("/api/ifttt-test", async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).send(e.message);
+  }
+});
+
+// --- OIKEA ajokone kaikille hälytyksille ---
+async function runAllAlerts() {
+  const fresh = [];
+  for (const alrt of DB.alerts) {
+    if (!alrt.active) continue;
+    const got = await runAlertOnce(alrt);
+    fresh.push(...got);
+  }
+  return fresh;
+}
+
+app.post('/api/runAll', async (req, res) => {
+  try {
+    const result = await runAllAlerts();
+    res.json({ success: true, count: result.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- (Pidä tämä jo olemassa ollut cron ennallaan jos se on ylempänä) ---
+// cron.schedule("*/5 * * * *", async () => { ... });
+
+// --- Käynnistys ---
+const PORT = process.env.PORT || 8787;
+app.listen(PORT, () => console.log(`SimuAlert backend listening on :${PORT}`));
+
   }
 });
 
