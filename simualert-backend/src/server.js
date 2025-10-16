@@ -181,5 +181,50 @@ app.get("/test", (req, res) => {
     <p>Aika palvelimella: ${new Date().toLocaleString()}</p>
   `);
 });
+import { notifyIFTTT } from "./notifiers/ifttt.js";
+
+// 1) POST: turvallinen tapa — anna ifttt_url bodyssa
+app.post("/api/ifttt-test", async (req, res) => {
+  try {
+    const url = req.body?.ifttt_url;
+    if (!url) return res.status(400).json({ ok:false, error: "missing ifttt_url" });
+
+    const fakeItem = {
+      title: "Escort Mk2 – testilöytö",
+      price_eur: 123,
+      source: "tori",
+      url: "https://example.com/ilmoitus",
+      location: "Forssa",
+      posted_at: new Date().toISOString(),
+    };
+
+    await notifyIFTTT(url, fakeItem);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok:false, error: e.message });
+  }
+});
+
+// 2) (Valinnainen) GET: helppo selain-testi ?url=<IFTTT>
+app.get("/api/ifttt-test", async (req, res) => {
+  try {
+    const url = req.query.url;
+    if (!url) return res.status(400).send("Missing ?url=");
+    const fakeItem = {
+      title: "Escort Mk2 – testilöytö",
+      price_eur: 123,
+      source: "tori",
+      url: "https://example.com/ilmoitus",
+      location: "Forssa",
+      posted_at: new Date().toISOString(),
+    };
+    await notifyIFTTT(url, fakeItem);
+    res.send("OK");
+  } catch (e) {
+    console.error(e);
+    res.status(500).send(e.message);
+  }
+});
 
 app.listen(PORT, () => console.log(`SimuAlert backend listening on :${PORT}`));
