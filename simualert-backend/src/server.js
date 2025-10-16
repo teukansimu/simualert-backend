@@ -156,10 +156,16 @@ cron.schedule("*/5 * * * *", async () => {
     if (alrt.active) await runAlertOnce(alrt);
   }
 });
-// Lisätään manuaalinen käynnistys kaikille hauille
 async function runAllAlerts() {
-  console.log('Running all alerts manually...');
-  return [];
+  const fresh = [];
+  for (const alrt of DB.alerts) {
+    if (!alrt.active) continue;
+    const got = await runAlertOnce(alrt); // tämä on jo tiedostossa valmiina
+    fresh.push(...got);
+  }
+  return fresh; // palauttaa kaikki tän ajon uudet löydöt
+}
+
 }
 
 app.post('/api/runAll', async (req, res) => {
