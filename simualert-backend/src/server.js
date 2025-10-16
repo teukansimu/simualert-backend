@@ -143,7 +143,7 @@ async function runAlertOnce(alrt){
 async function safeNotify(alrt, item){
   try {
     if (alrt.notify.includes("email") && alrt.ifttt_url) {
-      await notifyIFTTT(alrt.ifttt_url, item);
+    
     }
   } catch (e) {
     console.error("notify error", e?.message);
