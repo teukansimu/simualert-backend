@@ -142,12 +142,21 @@ async function runAlertOnce(alrt){
 
 
 
-// Cron every 5 minutes
-cron.schedule("*/5 * * * *", async () => {
+// Ajoajat UTC 10:00, 14:00, 20:00 ja 22:00 (Suomen aikaa n. 13:00, 17:00, 23:00 ja 01:00)
+cron.schedule("0 10,14,20,22 * * *", async () => {
+  console.log("⏰ Ajastettu haku käynnistyy...");
   for (const alrt of DB.alerts) {
-    if (alrt.active) await runAlertOnce(alrt);
+    if (alrt.active) {
+      try {
+        const result = await runAlertOnce(alrt);
+        console.log(`✅ ${alrt.name}: ${result.length} uutta löydetty.`);
+      } catch (err) {
+        console.error(`⚠️ Virhe haussa ${alrt.name}:`, err.message);
+      }
+    }
   }
 });
+
 
 // --- oikea runAllAlerts kaikille hälytyksille ---
 async function runAllAlerts() {
