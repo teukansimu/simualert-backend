@@ -1,1 +1,10 @@
+import Parser from "rss-parser";
+
+export async function fetchFromRSS(source) {
+  const parser = new Parser();
+  const feed = await parser.parseURL(source.url);
+  const out = [];
+  for (const it of feed.items || []) {
+    const startIso = it.isoDate
+      ? new Date(it.isoDate).toISOString
 
