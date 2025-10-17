@@ -140,15 +140,7 @@ async function runAlertOnce(alrt){
   return fresh;
 }
 
-async function safeNotify(alrt, item){
-  try {
-    if (alrt.notify.includes("email") && alrt.ifttt_url) {
-    
-    }
-  } catch (e) {
-    console.error("notify error", e?.message);
-  }
-}
+
 
 // Cron every 5 minutes
 cron.schedule("*/5 * * * *", async () => {
