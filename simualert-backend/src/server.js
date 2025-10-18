@@ -144,6 +144,65 @@ async function runAlertOnce(alrt){
   return fresh;
 }
 
+// ======== TAPAHTUMAT (Forssan seutu) ========
+const DBE = {
+  sources: [],         // {id, kind:'rss'|'ics'|'htmlFindIcs', url, name, region, active}
+  events: new Map(),   // hash -> event item
+};
+
+app.post("/api/event-sources", (req,res)=>{
+  const b = req.body || {};
+  const src = {
+    id: `es_${Math.random().toString(36).slice(2,9)}`,
+    kind: b.kind,
+    url: b.url,
+    name: b.name || "Lähde",
+    region: b.region || "Forssan seutu",
+    active: b.active ?? true,
+    created_at: new Date().toISOString()
+  };
+  DBE.sources.push(src);
+  res.json(src);
+});
+
+app.get("/api/event-sources", (req,res)=> res.json(DBE.sources));
+
+async function runEventsOnce(){
+  const fresh=[];
+  for (const s of DBE.sources.filter(s=>s.active)) {
+    let list=[];
+    try{
+      if (s.kind==="rss") list = await fetchFromRSS(s);
+      else if (s.kind==="ics") list = await fetchFromICS(s);
+      else if (s.kind==="htmlFindIcs") list = await fetchByFindingICSOnPage(s);
+    }catch(e){
+      console.error("event source error", s.name, e.message);
+      continue;
+    }
+    for (const it of list) {
+      const hash = `${it.source}#${it.source_id}`;
+      if (DBE.events.has(hash)) continue;
+      it.id = hash;
+      DBE.events.set(hash, it);
+      fresh.push(it);
+    }
+  }
+  return fresh;
+}
+
+app.get("/api/events", (req,res)=>{
+  const now = new Date();
+  const out = Array.from(DBE.events.values())
+    .filter(ev => !ev.end || new Date(ev.end) >= now)
+    .sort((a,b)=> new Date(a.start) - new Date(b.start))
+    .slice(0,200);
+  res.json(out);
+});
+
+app.post("/api/events/run", async (req,res)=>{
+  const got = await runEventsOnce();
+  res.json({count: got.length});
+});
 
 
 // Ajoajat UTC 10:00, 14:00, 20:00 ja 22:00 (Suomen aikaa n. 13:00, 17:00, 23:00 ja 01:00)
