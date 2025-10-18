@@ -6,6 +6,10 @@ import cron from "node-cron";
 import { fetchFromTori } from "./sources/tori.js";
 import { fetchFromEbay } from "./sources/ebay.js";
 import { notifyIFTTT } from "./notifiers/ifttt.js";
+import { fetchFromRSS } from "./sources/events/rss.js";
+import { fetchFromICS } from "./sources/events/ics.js";
+import { fetchByFindingICSOnPage } from "./sources/events/htmlFindIcs.js";
+
 
 const app = express();
 app.use(cors());
