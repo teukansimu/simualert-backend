@@ -220,6 +220,17 @@ cron.schedule("0 10,14,20,22 * * *", async () => {
   }
 });
 
+// Tapahtuma-ajo samoihin kellonaikoihin (UTC 10,14,20,22)
+cron.schedule("0 10,14,20,22 * * *", async () => {
+  try {
+    const got = await runEventsOnce();
+    console.log(`📅 Event-ajo: ${got.length} uutta tapahtumaa`);
+  } catch (e) {
+    console.error("event cron error", e.message);
+  }
+});
+
+
 
 // --- oikea runAllAlerts kaikille hälytyksille ---
 async function runAllAlerts() {
